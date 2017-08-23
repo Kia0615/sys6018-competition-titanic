@@ -4,7 +4,7 @@ library(dplyr)
 #Read in the datasets
 train <- read_csv("train.csv")
 test <- read_csv("test.csv")
-
+test
 #Factorize the categorical variables
 train$Pclass <- factor(train$Pclass)
 train$Sex <- factor(train$Sex)
@@ -30,7 +30,7 @@ preds <- rep(0,446)  # Initialize prediction vector
 preds[probs>0.5] <- 1 # p>0.5 -> 1
 preds
 table(preds,subtrain$Survived)
-(65+129)/446  # Proportion of predictions that are correct:43.5%
+(159+68)/446  # Proportion of predictions that are correct:50.9%
 
 anova(lg1,test="Chisq")
 
@@ -43,7 +43,7 @@ preds <- rep(0,446)  # Initialize prediction vector
 preds[probs>0.5] <- 1 # p>0.5 -> 1
 preds
 table(preds,subtrain$Survived)
-(166+84)/446  # Proportion of predictions that are correct:56.1%
+(160+70)/446  # Proportion of predictions that are correct:51.6%
 
 # Try the full model on the validation set
 probs<-as.vector(predict(lg2,newdata=valid, type="response"))
@@ -77,9 +77,23 @@ table(preds,valid$Survived)
 lg <- glm(Survived~Sex+Age+Pclass, data=train, family = "binomial")
 summary(lg)
 
+lg_noage <- glm(Survived~Sex+Pclass, data=train, family = "binomial")
+summary(lg_noage)
+
 # Use the final model to make predictions on test set
 probs<- predict(lg, newdata = test)
-test
+probs <- as.data.frame(probs)
+
+#Some passengers have missing ages, make a seperate model without age as an explanatory variable
+probs_noage <- predict(lg_noage,newdata = test)
+probs_noage <- as.data.frame(probs_noage)
+
+for (i in 1:nrow(probs)){
+  if (is.na(probs[i,])){
+    probs[i,] = probs_noage[i,]
+  }
+}
+probs
 mypreds <- rep(0,418)  # Initialize prediction vector
 mypreds[probs>0.5] <- 1 # p>0.5 -> 1
 
@@ -88,3 +102,4 @@ mypreds
 
 #Write out the predictions to a csv file
 write.table(mypreds, file = "wd3fg_submissions.csv", row.names=F, col.names=c("PassengerId","Survived"), sep=",")
+
