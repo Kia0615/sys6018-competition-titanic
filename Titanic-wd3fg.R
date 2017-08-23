@@ -73,5 +73,18 @@ table(preds,valid$Survived)
 (247+108)/445  # Not bad:79.8%
 
 # Develop the final model with the whole training set
+#======================Final Model=========================
 lg <- glm(Survived~Sex+Age+Pclass, data=train, family = "binomial")
 summary(lg)
+
+# Use the final model to make predictions on test set
+probs<- predict(lg, newdata = test)
+test
+mypreds <- rep(0,418)  # Initialize prediction vector
+mypreds[probs>0.5] <- 1 # p>0.5 -> 1
+
+mypreds <- cbind(test$PassengerId,mypreds)
+mypreds
+
+#Write out the predictions to a csv file
+write.table(mypreds, file = "wd3fg_submissions.csv", row.names=F, col.names=c("PassengerId","Survived"), sep=",")
